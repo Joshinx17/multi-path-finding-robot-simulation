@@ -3,616 +3,662 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intelligent Multi-Path Finding Robot Simulation</title>
+  <title>Intelligent Multi-Path Robot Simulation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;700&family=IBM+Plex+Sans+Condensed:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg:        #06090f;
-      --bg2:       #0c1220;
-      --bg3:       #101828;
-      --border:    #1a2d4a;
-      --border2:   #243d5c;
-      --dim:       #2e4a6a;
-      --muted:     #4a7090;
-      --text:      #8ab4d8;
-      --bright:    #c8e4f8;
-      --accent:    #3a9fd8;
+      --bg:        #05090e;
+      --bg2:       #081120;
+      --bg3:       #0b1828;
+      --panel:     #0d1f36;
+      --border:    rgba(50,110,190,.25);
+      --border2:   rgba(70,140,220,.45);
+      --border3:   rgba(90,170,255,.7);
+      --dim:       #1d4060;
+      --muted:     #3d7099;
+      --text:      #7ab2d8;
+      --bright:    #b5d8f2;
+      --white:     #e0f0ff;
+      --accent:    #3d9fdc;
+      --accent2:   #63c8e8;
 
-      --r1: #ff6b6b;
-      --r2: #4ecdc4;
-      --r3: #ffd93d;
-      --r4: #a29bfe;
-
-      --glow-r1: 0 0 18px rgba(255,107,107,.45);
-      --glow-r2: 0 0 18px rgba(78,205,196,.45);
-      --glow-r3: 0 0 18px rgba(255,217,61,.45);
-      --glow-r4: 0 0 18px rgba(162,155,254,.45);
+      --r1: #ff6b6b;  --r1a: rgba(255,107,107,.15);
+      --r2: #4ecdc4;  --r2a: rgba(78,205,196,.15);
+      --r3: #ffd93d;  --r3a: rgba(255,217,61,.15);
+      --r4: #a29bfe;  --r4a: rgba(162,155,254,.15);
     }
 
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Space Mono', monospace;
+      font-family: 'IBM Plex Mono', monospace;
       min-height: 100vh;
       user-select: none;
       overflow-x: hidden;
+      /* Blueprint dot grid */
+      background-image: radial-gradient(circle, rgba(40,100,200,.2) 1px, transparent 1px);
+      background-size: 26px 26px;
+      background-attachment: fixed;
     }
 
-    /* ─── Starfield ─────────────────────────────────────────────────────────── */
-    #stars {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(1px 1px at 12% 8%, rgba(255,255,255,.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 34% 22%, rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 56% 5%,  rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 78% 18%, rgba(255,255,255,.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 91% 7%,  rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 5%  43%, rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 23% 67%, rgba(255,255,255,.2) 0%, transparent 100%),
-        radial-gradient(1px 1px at 47% 38%, rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 64% 71%, rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 83% 55%, rgba(255,255,255,.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 96% 82%, rgba(255,255,255,.2) 0%, transparent 100%),
-        radial-gradient(1px 1px at 18% 90%, rgba(255,255,255,.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 39% 92%, rgba(255,255,255,.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 72% 88%, rgba(255,255,255,.3) 0%, transparent 100%);
-    }
-
-    /* ─── Layout ────────────────────────────────────────────────────────────── */
+    /* ── Page shell ──────────────────────────────────────────────────────────── */
     .page {
-      position: relative; z-index: 1;
-      max-width: 1100px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 28px 24px 48px;
+      padding: 0 24px 60px;
+    }
+
+    /* ── Document header strip ───────────────────────────────────────────────── */
+    .doc-header {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       gap: 0;
+      border-bottom: 1px solid var(--border2);
+      margin-bottom: 0;
     }
 
-    /* ─── Header ────────────────────────────────────────────────────────────── */
-    header {
-      width: 100%;
-      text-align: center;
-      padding-bottom: 28px;
-      position: relative;
+    .doc-title-block {
+      flex: 1;
+      padding: 28px 0 20px;
+      border-right: 1px solid var(--border);
+      padding-right: 28px;
     }
 
-    .eyebrow {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 5px;
+    .doc-eyebrow {
+      font-size: 9px;
+      letter-spacing: 4px;
       color: var(--accent);
-      margin-bottom: 10px;
-      opacity: .85;
+      margin-bottom: 6px;
     }
 
     h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      font-size: clamp(16px, 3.5vw, 30px);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(32px, 6vw, 68px);
+      line-height: .96;
       letter-spacing: 2px;
-      line-height: 1.25;
-      color: var(--bright);
-      text-shadow: 0 0 40px rgba(58,159,216,.4), 0 0 80px rgba(58,159,216,.15);
+      color: var(--white);
+      text-shadow: 0 0 60px rgba(61,159,220,.3);
+    }
+    h1 em {
+      font-style: normal;
+      color: var(--accent2);
     }
 
-    h1 span {
-      background: linear-gradient(120deg, #4ecdc4, #a29bfe 40%, #3a9fd8 80%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .subtitle {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 13px;
+    .doc-sub {
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      font-size: 11px;
       font-weight: 300;
       letter-spacing: 3px;
       color: var(--muted);
       margin-top: 8px;
     }
 
-    .header-rule {
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border2) 30%, var(--accent) 50%, var(--border2) 70%, transparent);
-      margin-top: 20px;
-      position: relative;
-    }
-    .header-rule::before {
-      content: '◆';
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      background: var(--bg);
-      padding: 0 8px;
-      color: var(--accent);
-      font-size: 8px;
+    .doc-meta {
+      padding: 20px 0 20px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 220px;
+      gap: 6px;
     }
 
-    /* ─── Main section ──────────────────────────────────────────────────────── */
-    .main {
-      width: 100%;
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--dim);
+      border-bottom: 1px solid rgba(40,80,150,.2);
+      padding-bottom: 4px;
+    }
+    .meta-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .meta-val { color: var(--muted); }
+
+    /* ── Horizontal rule with node ───────────────────────────────────────────── */
+    .h-rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border2) 20%, var(--accent) 50%, var(--border2) 80%, transparent);
+      position: relative;
+      margin: 0;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────────────────────── */
+    .workspace {
       display: flex;
       gap: 20px;
+      padding: 20px 0;
       align-items: flex-start;
-      margin-top: 24px;
     }
 
-    /* ─── Sim panel ─────────────────────────────────────────────────────────── */
-    .sim-panel {
+    /* ── Left column: canvas area ────────────────────────────────────────────── */
+    .sim-col {
       flex: 0 0 auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
-    /* Mode bar */
+    /* Status bar — telemetry readout style */
     #mode-bar {
-      font-family: 'Space Mono', monospace;
       font-size: 9px;
       letter-spacing: 2.5px;
       color: var(--muted);
       background: var(--bg2);
       border: 1px solid var(--border);
-      padding: 6px 16px;
-      width: 100%;
-      text-align: center;
-      transition: color 0.3s, border-color 0.3s;
-      position: relative;
-      overflow: hidden;
+      border-left: 3px solid var(--muted);
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color .3s, color .3s;
     }
     #mode-bar::before {
       content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
       background: currentColor;
-      opacity: .6;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+      animation: blink 2s infinite;
     }
-    #mode-bar.running { color: var(--r2); border-color: rgba(78,205,196,.3); }
-    #mode-bar.done    { color: var(--r4); border-color: rgba(162,155,254,.3); }
-    #mode-bar.error   { color: var(--r1); border-color: rgba(255,107,107,.3); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-    /* Canvas wrapper with glow */
-    .canvas-wrap {
+    #mode-bar.running { color: var(--r2); border-left-color: var(--r2); }
+    #mode-bar.done    { color: var(--r4); border-left-color: var(--r4); }
+    #mode-bar.error   { color: var(--r1); border-left-color: var(--r1); }
+
+    /* Canvas frame */
+    .canvas-frame {
       position: relative;
-      border-radius: 4px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      padding: 32px 32px 32px 42px; /* extra left for row labels */
     }
-    .canvas-wrap::before {
-      content: '';
+
+    /* Axis labels */
+    .axis-cols, .axis-rows {
       position: absolute;
-      inset: -2px;
-      border-radius: 6px;
-      background: linear-gradient(135deg, rgba(78,205,196,.25), rgba(162,155,254,.15) 50%, rgba(58,159,216,.2));
-      z-index: -1;
+      font-size: 7px;
+      color: var(--dim);
+      letter-spacing: .5px;
+      font-weight: 300;
     }
-    .canvas-wrap::after {
-      content: '';
+    .axis-cols {
+      bottom: 10px; left: 42px; right: 32px;
+      display: flex;
+      justify-content: space-around;
+    }
+    .axis-rows {
+      left: 8px; top: 32px; bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      text-align: right;
+      width: 26px;
+    }
+
+    /* Tick marks around frame */
+    .frame-tick {
       position: absolute;
-      inset: -12px;
-      border-radius: 12px;
-      background: radial-gradient(ellipse, rgba(58,159,216,.08) 0%, transparent 70%);
-      z-index: -2;
-      pointer-events: none;
+      background: var(--border2);
     }
+    .frame-tick.h { height: 1px; width: 8px; }
+    .frame-tick.v { width: 1px; height: 8px; }
+    .frame-tick.tl-h { top: 0; left: 0; }
+    .frame-tick.tl-v { top: 0; left: 0; }
+    .frame-tick.tr-h { top: 0; right: 0; }
+    .frame-tick.tr-v { top: 0; right: 0; }
+    .frame-tick.bl-h { bottom: 0; left: 0; }
+    .frame-tick.bl-v { bottom: 0; left: 0; }
+    .frame-tick.br-h { bottom: 0; right: 0; }
+    .frame-tick.br-v { bottom: 0; right: 0; }
 
     canvas {
-      border-radius: 4px;
-      cursor: crosshair;
       display: block;
-      border: 1px solid var(--border2);
+      cursor: crosshair;
     }
 
-    /* Scanline overlay */
-    .scanline {
-      position: absolute;
-      inset: 0;
-      border-radius: 4px;
-      pointer-events: none;
-      z-index: 10;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,.04) 2px,
-        rgba(0,0,0,.04) 4px
-      );
-    }
-
-    /* Corner decorations */
-    .corner-decor {
-      position: absolute;
-      width: 14px; height: 14px;
-      pointer-events: none;
-      z-index: 5;
-    }
-    .corner-decor.tl { top: -1px; left: -1px;  border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .corner-decor.tr { top: -1px; right: -1px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
-    .corner-decor.bl { bottom: -1px; left: -1px;  border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-    .corner-decor.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
-
-    /* ─── Controls ──────────────────────────────────────────────────────────── */
-    #controls {
+    /* ── Controls ────────────────────────────────────────────────────────────── */
+    .controls-strip {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
-      justify-content: center;
-      width: 100%;
     }
 
     button {
-      padding: 8px 18px;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
+      padding: 9px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
       cursor: pointer;
-      font-family: 'Space Mono', monospace;
+      font-family: 'IBM Plex Mono', monospace;
       font-size: 8px;
-      letter-spacing: 2px;
+      letter-spacing: 2.5px;
       color: var(--muted);
-      transition: all 0.2s;
+      transition: all .18s;
       position: relative;
-      overflow: hidden;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
     }
     button::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(58,159,216,.05), transparent);
+      background: linear-gradient(135deg, rgba(61,159,220,.06), transparent 60%);
       opacity: 0;
-      transition: opacity .2s;
+      transition: opacity .18s;
     }
+    button:hover { color: var(--white); border-color: var(--accent); }
     button:hover::before { opacity: 1; }
-    button:hover { color: var(--bright); border-color: var(--accent); box-shadow: 0 0 12px rgba(58,159,216,.2); }
+    button.go { border-color: rgba(78,205,196,.45); color: var(--r2); }
+    button.go:hover { border-color: var(--r2); box-shadow: 0 0 14px rgba(78,205,196,.2); }
+    button.active-slow { border-color: rgba(162,155,254,.45); color: var(--r4); }
+    button:disabled { opacity: .2; cursor: default; pointer-events: none; }
 
-    button.go { border-color: rgba(78,205,196,.4); color: var(--r2); }
-    button.go:hover { border-color: var(--r2); box-shadow: var(--glow-r2); }
-    button.active-slow { border-color: rgba(162,155,254,.5); color: var(--r4); }
-    button:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
-
-    /* ─── Legend ────────────────────────────────────────────────────────────── */
-    #legend {
+    /* ── Legend ──────────────────────────────────────────────────────────────── */
+    .legend-strip {
       display: flex;
-      gap: 18px;
-      font-size: 8px;
-      letter-spacing: 1.5px;
-      color: var(--muted);
+      gap: 16px;
       flex-wrap: wrap;
-      justify-content: center;
-    }
-    .leg { display: flex; align-items: center; gap: 6px; }
-    .dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-      box-shadow: 0 0 6px currentColor;
     }
 
-    /* ─── Side info panel ───────────────────────────────────────────────────── */
-    .info-panel {
-      flex: 1 1 260px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      min-width: 220px;
-    }
-
-    .card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 16px 18px;
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--accent), transparent 80%);
-    }
-
-    .card-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 9px;
-      letter-spacing: 3px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 12px;
+    .leg {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      color: var(--dim);
     }
-    .card-title::before {
-      content: '';
-      display: inline-block;
-      width: 6px; height: 6px;
-      border: 1px solid var(--accent);
-      transform: rotate(45deg);
+    .leg-swatch {
+      width: 20px; height: 3px;
+      border-radius: 2px;
       flex-shrink: 0;
     }
+    .leg-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 4px currentColor;
+    }
 
-    .card p {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 13px;
-      font-weight: 400;
+    /* ── Right info column ───────────────────────────────────────────────────── */
+    .info-col {
+      flex: 1 1 260px;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 0;
+    }
+
+    /* Blueprint callout card */
+    .callout {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      position: relative;
+      padding: 16px 18px 18px;
+    }
+    /* Top-left notch */
+    .callout::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px;
+      width: 12px; height: 12px;
+      background: var(--bg);
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+    /* Number badge */
+    .callout-num {
+      position: absolute;
+      top: -10px; right: 14px;
+      background: var(--accent);
+      color: #000;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 2px 7px;
+      clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+    }
+
+    .callout-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .callout p {
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      font-size: 12.5px;
+      font-weight: 300;
+      line-height: 1.72;
       color: var(--text);
-      line-height: 1.7;
       margin-bottom: 8px;
     }
-    .card p:last-child { margin-bottom: 0; }
+    .callout p:last-child { margin-bottom: 0; }
+    .callout strong { color: var(--bright); font-weight: 600; }
 
-    .formula {
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      color: var(--r4);
-      background: rgba(162,155,254,.07);
-      border-left: 2px solid var(--r4);
-      padding: 6px 10px;
+    .formula-box {
+      background: rgba(40,100,180,.1);
+      border-left: 2px solid var(--accent);
+      padding: 7px 12px;
       margin: 8px 0;
+      font-size: 11px;
       letter-spacing: 1px;
+      color: var(--accent2);
     }
 
-    .tag-row {
+    .spec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .spec-cell {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 7px 9px;
+    }
+    .spec-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--white);
+      line-height: 1;
+    }
+    .spec-label {
+      font-size: 7px;
+      letter-spacing: 2px;
+      color: var(--dim);
+      margin-top: 3px;
+    }
+
+    .agent-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8px;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+    .agent-table td {
+      padding: 5px 6px;
+      border: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .agent-table td:first-child { width: 10px; padding: 0; }
+    .agent-swatch { width: 4px; height: 100%; min-height: 28px; display: block; }
+    .agent-name { color: var(--bright); font-weight: 700; }
+    .agent-route { color: var(--muted); font-size: 7px; letter-spacing: 1.5px; }
+
+    /* Chip tags */
+    .chip-row {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 8px;
-    }
-    .tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 1px;
-      padding: 3px 8px;
-      border: 1px solid var(--border2);
-      color: var(--muted);
-      border-radius: 1px;
-    }
-
-    .stat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
       margin-top: 10px;
     }
-    .stat {
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      border-radius: 2px;
-    }
-    .stat-val {
-      font-family: 'Orbitron', monospace;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--bright);
-    }
-    .stat-label {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 10px;
+    .chip {
+      font-size: 7px;
       letter-spacing: 1.5px;
+      padding: 3px 8px;
+      border: 1px solid var(--border2);
       color: var(--dim);
-      margin-top: 2px;
+      clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
     }
 
-    /* ─── Robot status strip ────────────────────────────────────────────────── */
-    .robot-status {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .r-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 9px;
-      letter-spacing: 1px;
-      color: var(--muted);
-      font-family: 'Space Mono', monospace;
-    }
-    .r-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .r-label { flex: 0 0 24px; }
-    .r-route { flex: 1; color: var(--dim); font-size: 8px; }
-
-    /* ─── Bottom info row ───────────────────────────────────────────────────── */
-    .bottom-row {
-      width: 100%;
-      margin-top: 20px;
+    /* ── Bottom data strip ───────────────────────────────────────────────────── */
+    .data-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 20px;
     }
 
-    .bottom-card {
+    .data-cell {
       background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 14px 16px;
+      padding: 16px 20px;
       position: relative;
     }
-    .bottom-card-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 8px;
-      letter-spacing: 3px;
-      color: var(--accent);
-      margin-bottom: 8px;
+    .data-cell::before {
+      content: attr(data-num);
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 22px;
+      font-family: 'Bebas Neue', sans-serif;
+      color: rgba(40,100,180,.2);
+      line-height: 1;
     }
-    .bottom-card p {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 12px;
-      color: var(--text);
+    .data-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .data-cell p {
+      font-family: 'IBM Plex Sans Condensed', sans-serif;
+      font-size: 11.5px;
+      font-weight: 300;
       line-height: 1.65;
+      color: var(--text);
     }
 
-    /* ─── Footer ────────────────────────────────────────────────────────────── */
+    /* ── Footer ──────────────────────────────────────────────────────────────── */
     footer {
-      width: 100%;
       margin-top: 28px;
-      text-align: center;
-      font-size: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 7px;
       letter-spacing: 2px;
       color: var(--dim);
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
     }
 
-    /* ─── Hint ──────────────────────────────────────────────────────────────── */
-    #hint {
-      font-size: 8px;
-      letter-spacing: 1.5px;
-      color: var(--dim);
-      text-align: center;
-    }
-
-    /* ─── Responsive ────────────────────────────────────────────────────────── */
-    @media (max-width: 780px) {
-      .main { flex-direction: column; align-items: center; }
-      .info-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
-      .info-panel .card { flex: 1 1 200px; }
-      .bottom-row { grid-template-columns: 1fr; }
+    /* ── Responsive ──────────────────────────────────────────────────────────── */
+    @media (max-width: 820px) {
+      .workspace { flex-direction: column; align-items: stretch; }
+      .info-col { flex-direction: row; flex-wrap: wrap; }
+      .callout { flex: 1 1 200px; }
+      .data-strip { grid-template-columns: 1fr; }
+      .doc-meta { display: none; }
     }
   </style>
 </head>
 <body>
-
-<div id="stars"></div>
-
 <div class="page">
 
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
-  <header>
-    <div class="eyebrow">// AUTONOMOUS NAVIGATION SYSTEM v2.0</div>
-    <h1>INTELLIGENT <span>MULTI-PATH</span><br>FINDING ROBOT SIMULATION</h1>
-    <p class="subtitle">COOPERATIVE A* · TIME-SPACE PLANNING · 8-DIRECTIONAL MOVEMENT</p>
-    <div class="header-rule"></div>
-  </header>
+  <!-- ── Document header ──────────────────────────────────────────────────── -->
+  <div class="doc-header">
+    <div class="doc-title-block">
+      <div class="doc-eyebrow">// PROJECT · MULTI-AGENT NAVIGATION SYSTEM</div>
+      <h1>INTELLIGENT<br><em>MULTI-PATH</em><br>ROBOT SIM</h1>
+      <p class="doc-sub">COOPERATIVE A* · TIME-SPACE PLANNING · DIAGONAL TRAVERSAL · 18×18 GRID</p>
+    </div>
+    <div class="doc-meta">
+      <div class="meta-row"><span>PROJECT</span><span class="meta-val">NAV-SIM-2025</span></div>
+      <div class="meta-row"><span>SHEET</span><span class="meta-val">01 OF 01</span></div>
+      <div class="meta-row"><span>REVISION</span><span class="meta-val">REV B</span></div>
+      <div class="meta-row"><span>ALGORITHM</span><span class="meta-val">COOP. A*</span></div>
+      <div class="meta-row"><span>AGENTS</span><span class="meta-val">4 × ROBOTS</span></div>
+      <div class="meta-row"><span>GRID</span><span class="meta-val">18 × 18 CELLS</span></div>
+      <div class="meta-row"><span>T_MAX</span><span class="meta-val">120 STEPS</span></div>
+      <div class="meta-row"><span>MOVEMENT</span><span class="meta-val">8-DIRECTIONAL</span></div>
+    </div>
+  </div>
 
-  <!-- ── Main ────────────────────────────────────────────────────────────── -->
-  <div class="main">
+  <div class="h-rule"></div>
 
-    <!-- Simulation panel -->
-    <div class="sim-panel" id="sim-panel">
-      <div id="mode-bar">SETUP — CLICK ANY CELL TO TOGGLE AN OBSTACLE</div>
+  <!-- ── Workspace ────────────────────────────────────────────────────────── -->
+  <div class="workspace">
 
-      <div class="canvas-wrap">
-        <div class="scanline"></div>
-        <div class="corner-decor tl"></div>
-        <div class="corner-decor tr"></div>
-        <div class="corner-decor bl"></div>
-        <div class="corner-decor br"></div>
+    <!-- Left: canvas + controls -->
+    <div class="sim-col">
+      <div id="mode-bar">SETUP — CLICK GRID CELLS TO TOGGLE OBSTACLES</div>
+
+      <div class="canvas-frame">
+        <!-- Corner ticks -->
+        <div class="frame-tick h tl-h"></div><div class="frame-tick v tl-v"></div>
+        <div class="frame-tick h tr-h"></div><div class="frame-tick v tr-v"></div>
+        <div class="frame-tick h bl-h"></div><div class="frame-tick v bl-v"></div>
+        <div class="frame-tick h br-h"></div><div class="frame-tick v br-v"></div>
+        <!-- Row labels A-R -->
+        <div class="axis-rows" id="axis-rows"></div>
+        <!-- Column labels 01-18 -->
+        <div class="axis-cols" id="axis-cols"></div>
         <canvas id="c"></canvas>
       </div>
 
-      <div id="controls">
-        <button id="btn-go"    class="go"   onclick="startSim()">▶ START</button>
-        <button id="btn-slow"              onclick="toggleSlow()">◈ SLOW MODE</button>
-        <button id="btn-clear"             onclick="clearObs()">⊠ CLEAR</button>
-        <button id="btn-reset"             onclick="resetSim()">↺ RESET</button>
+      <div class="controls-strip">
+        <button id="btn-go"    class="go"  onclick="startSim()">▶ EXECUTE</button>
+        <button id="btn-slow"             onclick="toggleSlow()">◈ SLOW MODE</button>
+        <button id="btn-clear"            onclick="clearObs()">⊠ CLEAR MAP</button>
+        <button id="btn-reset"            onclick="resetSim()">↺ RESET</button>
       </div>
 
-      <div id="legend">
-        <div class="leg"><div class="dot" style="background:var(--r1);color:var(--r1)"></div>R1 · TL → BR</div>
-        <div class="leg"><div class="dot" style="background:var(--r2);color:var(--r2)"></div>R2 · TR → BL</div>
-        <div class="leg"><div class="dot" style="background:var(--r3);color:var(--r3)"></div>R3 · BR → TL</div>
-        <div class="leg"><div class="dot" style="background:var(--r4);color:var(--r4)"></div>R4 · BL → TR</div>
+      <div class="legend-strip">
+        <div class="leg">
+          <div class="leg-dot" style="background:var(--r1);color:var(--r1)"></div>
+          R1 · TL → BR
+        </div>
+        <div class="leg">
+          <div class="leg-dot" style="background:var(--r2);color:var(--r2)"></div>
+          R2 · TR → BL
+        </div>
+        <div class="leg">
+          <div class="leg-dot" style="background:var(--r3);color:var(--r3)"></div>
+          R3 · BR → TL
+        </div>
+        <div class="leg">
+          <div class="leg-dot" style="background:var(--r4);color:var(--r4)"></div>
+          R4 · BL → TR
+        </div>
       </div>
-
-      <div id="hint">CORNER CELLS LOCKED · PLACE OBSTACLES FREELY</div>
     </div>
 
-    <!-- Info panel -->
-    <div class="info-panel">
+    <!-- Right: info callouts -->
+    <div class="info-col">
 
-      <div class="card">
-        <div class="card-title">A* ALGORITHM</div>
-        <p>A* is an informed search algorithm that finds optimal paths using a best-first strategy guided by a heuristic function.</p>
-        <div class="formula">f(n) = g(n) + h(n)</div>
-        <p><strong style="color:var(--bright)">g(n)</strong> — exact cost from start to node n<br>
-           <strong style="color:var(--bright)">h(n)</strong> — Octile distance heuristic to goal</p>
-        <p>A min-heap priority queue ensures each node is always expanded in order of lowest estimated total cost, guaranteeing optimality.</p>
-        <div class="tag-row">
-          <span class="tag">OCTILE HEURISTIC</span>
-          <span class="tag">MIN-HEAP</span>
-          <span class="tag">ADMISSIBLE</span>
+      <div class="callout">
+        <div class="callout-num">01</div>
+        <div class="callout-title">A* Pathfinding</div>
+        <p>A* finds optimal paths through informed search, balancing known travel cost with an admissible heuristic estimate to the goal.</p>
+        <div class="formula-box">f(n) = g(n) + h(n) · 0.8</div>
+        <p><strong>g(n)</strong> is the exact accumulated cost from start to node n. <strong>h(n)</strong> is the Octile distance heuristic — accurate for 8-directional grids. The 0.8 weight makes h slightly inadmissible, prioritising speed over strict optimality in the cooperative planner.</p>
+        <p>A binary <strong>min-heap</strong> priority queue ensures each node expansion costs O(log n), keeping the search fast even on dense grids.</p>
+        <div class="chip-row">
+          <span class="chip">OCTILE HEURISTIC</span>
+          <span class="chip">MIN-HEAP</span>
+          <span class="chip">8-DIR</span>
+          <span class="chip">WEIGHTED-H</span>
         </div>
       </div>
 
-      <div class="card" style="--accent: #a29bfe;">
-        <div class="card-title" style="color:var(--r4)">COOPERATIVE PATHFINDING</div>
-        <p>Each robot plans a path in the joint <em style="color:var(--bright)">time-space</em> domain — (col, row, timestep) — so it can reason about where other robots will be in the future.</p>
-        <p>A shared <strong style="color:var(--bright)">reservation table</strong> stores every cell every higher-priority robot will occupy at each timestep. Lower-priority robots route around these reservations — or wait in place.</p>
-        <p>Swap collisions (A→B simultaneously as B→A) are explicitly detected and blocked.</p>
-        <div class="tag-row">
-          <span class="tag">TIME-SPACE A*</span>
-          <span class="tag">RESERVATION TABLE</span>
-          <span class="tag">WAIT-IN-PLACE</span>
+      <div class="callout">
+        <div class="callout-num">02</div>
+        <div class="callout-title">Cooperative Planning</div>
+        <p>Each robot plans in <strong>time-space</strong> — a 3D graph of (column, row, timestep). This lets lower-priority robots reason about where others will be and route around them.</p>
+        <p>A shared <strong>reservation table</strong> stores every cell occupied by higher-priority robots at each future timestep. Lower-priority robots treat reserved cells as temporary walls — or wait in place for one step to yield.</p>
+        <p><strong>Swap collisions</strong> (A→B at the same instant B→A) are explicitly detected and blocked.</p>
+        <div class="chip-row">
+          <span class="chip">TIME-SPACE A*</span>
+          <span class="chip">RESERVATION TABLE</span>
+          <span class="chip">WAIT-IN-PLACE</span>
+          <span class="chip">SWAP CHECK</span>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">MODEL DETAILS</div>
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-val">18×18</div>
-            <div class="stat-label">GRID SIZE</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">4</div>
-            <div class="stat-label">AGENTS</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">8-DIR</div>
-            <div class="stat-label">MOVEMENT</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">T=120</div>
-            <div class="stat-label">MAX STEPS</div>
-          </div>
+      <div class="callout">
+        <div class="callout-num">03</div>
+        <div class="callout-title">Optimal Order Search</div>
+        <p>Priority order matters — a bad ordering can trap lower-priority robots. This simulation tries <strong>all 24 permutations</strong> of planning order and selects the one that maximises robots arriving, then minimises total path cost.</p>
+        <div class="spec-grid">
+          <div class="spec-cell"><div class="spec-val">18²</div><div class="spec-label">GRID CELLS</div></div>
+          <div class="spec-cell"><div class="spec-val">4!</div><div class="spec-label">ORDERS TRIED</div></div>
+          <div class="spec-cell"><div class="spec-val">T120</div><div class="spec-label">MAX TIMESTEPS</div></div>
+          <div class="spec-cell"><div class="spec-val">8</div><div class="spec-label">MOVE DIRS</div></div>
         </div>
-        <div class="robot-status" style="margin-top:12px">
-          <div class="r-row"><div class="r-dot" style="background:var(--r1)"></div><span class="r-label">R1</span><span class="r-route">TOP-LEFT → BOTTOM-RIGHT</span></div>
-          <div class="r-row"><div class="r-dot" style="background:var(--r2)"></div><span class="r-label">R2</span><span class="r-route">TOP-RIGHT → BOTTOM-LEFT</span></div>
-          <div class="r-row"><div class="r-dot" style="background:var(--r3)"></div><span class="r-label">R3</span><span class="r-route">BOTTOM-RIGHT → TOP-LEFT</span></div>
-          <div class="r-row"><div class="r-dot" style="background:var(--r4)"></div><span class="r-label">R4</span><span class="r-route">BOTTOM-LEFT → TOP-RIGHT</span></div>
-        </div>
+        <table class="agent-table">
+          <tr>
+            <td><div class="agent-swatch" style="background:var(--r1)"></div></td>
+            <td><span class="agent-name">R1</span></td>
+            <td><span class="agent-route">TOP-LEFT → BOTTOM-RIGHT</span></td>
+          </tr>
+          <tr>
+            <td><div class="agent-swatch" style="background:var(--r2)"></div></td>
+            <td><span class="agent-name">R2</span></td>
+            <td><span class="agent-route">TOP-RIGHT → BOTTOM-LEFT</span></td>
+          </tr>
+          <tr>
+            <td><div class="agent-swatch" style="background:var(--r3)"></div></td>
+            <td><span class="agent-name">R3</span></td>
+            <td><span class="agent-route">BOTTOM-RIGHT → TOP-LEFT</span></td>
+          </tr>
+          <tr>
+            <td><div class="agent-swatch" style="background:var(--r4)"></div></td>
+            <td><span class="agent-name">R4</span></td>
+            <td><span class="agent-route">BOTTOM-LEFT → TOP-RIGHT</span></td>
+          </tr>
+        </table>
       </div>
 
     </div>
   </div>
 
-  <!-- ── Bottom info cards ─────────────────────────────────────────────────── -->
-  <div class="bottom-row">
-    <div class="bottom-card">
-      <div class="bottom-card-title">OBSTACLE PLACEMENT</div>
-      <p>During setup, click any non-corner cell to toggle an obstacle. Obstacles are represented as impassable walls. The simulation checks at start time whether each robot has at least one viable static path — if not, the robot is marked trapped.</p>
+  <!-- ── Data strip ────────────────────────────────────────────────────────── -->
+  <div class="data-strip">
+    <div class="data-cell" data-num="A">
+      <div class="data-title">Obstacle Placement</div>
+      <p>During setup, click any non-corner cell to toggle a wall. Walls are impassable. At runtime, a static A* check verifies each robot has at least one viable path — if not, the robot is flagged as trapped before the simulation begins.</p>
     </div>
-    <div class="bottom-card">
-      <div class="bottom-card-title">DIAGONAL MOVEMENT</div>
-      <p>Robots can move in all 8 cardinal and diagonal directions. Diagonal cuts through wall corners are prevented — both adjacent orthogonal cells must be free — ensuring physically realistic traversal through narrow passages.</p>
+    <div class="data-cell" data-num="B">
+      <div class="data-title">Diagonal Movement</div>
+      <p>Robots traverse all 8 directions including diagonals. To prevent clipping through wall corners, a diagonal move is only permitted if both orthogonally adjacent cells are free — ensuring physically realistic navigation in tight spaces.</p>
     </div>
-    <div class="bottom-card">
-      <div class="bottom-card-title">PRIORITY & COLLISION</div>
-      <p>Robots plan in priority order (R1 first, R4 last). A robot may wait in-place for one or more timesteps to yield to a higher-priority agent. Once all robots reach their opposite corners, the simulation completes.</p>
+    <div class="data-cell" data-num="C">
+      <div class="data-title">Conflict Resolution</div>
+      <p>Robots occupying the same cell at the same timestep is forbidden. Swap collisions are blocked. A robot may wait in-place (zero-displacement move) for any number of steps to yield. The best-order search maximises successful arrivals globally.</p>
     </div>
   </div>
 
   <footer>
-    COOPERATIVE A* MULTI-AGENT PATHFINDING · 18×18 GRID · 8-DIRECTIONAL MOVEMENT
+    <span>INTELLIGENT MULTI-PATH FINDING ROBOT SIMULATION · COOPERATIVE A*</span>
+    <span>18×18 · 8-DIR · 4 AGENTS · T_MAX 120</span>
   </footer>
 
 </div><!-- .page -->
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-//  Canvas + grid constants
+//  Build axis labels
+// ─────────────────────────────────────────────────────────────────────────────
+const COL_LABELS = 'ABCDEFGHIJKLMNOPQR'.split('');
+const ROW_LABELS = Array.from({length:18},(_,i)=>String(i+1).padStart(2,'0'));
+
+const axCols = document.getElementById('axis-cols');
+const axRows = document.getElementById('axis-rows');
+
+COL_LABELS.forEach(l => {
+  const s = document.createElement('span'); s.textContent = l; axCols.appendChild(s);
+});
+ROW_LABELS.forEach(l => {
+  const s = document.createElement('span'); s.textContent = l; axRows.appendChild(s);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Canvas sizing
 // ─────────────────────────────────────────────────────────────────────────────
 const canvas  = document.getElementById('c');
 const ctx     = canvas.getContext('2d');
@@ -620,18 +666,15 @@ const modeBar = document.getElementById('mode-bar');
 const btnGo   = document.getElementById('btn-go');
 const btnClear= document.getElementById('btn-clear');
 
-// Fit canvas to the sim-panel width (minus padding)
-const simPanel = document.getElementById('sim-panel');
-const SIZE  = Math.min(
-  window.innerWidth > 780
-    ? Math.floor((window.innerWidth - 280 - 48 - 40) * 0.72)
-    : window.innerWidth - 48,
-  520
+const isWide = window.innerWidth >= 820;
+const SIZE = Math.min(
+  isWide ? Math.floor((window.innerWidth - 340) * 0.62) : window.innerWidth - 56,
+  530
 );
 canvas.width = canvas.height = SIZE;
 
 const N      = 18;
-const PAD    = Math.round(SIZE * 0.04);
+const PAD    = Math.round(SIZE * 0.03);
 const AREA   = SIZE - 2 * PAD;
 const CELL   = AREA / N;
 const R      = Math.round(CELL * 0.28);
@@ -640,7 +683,6 @@ const SPEED  = CELL * 0.10;
 const FPC    = Math.max(6, Math.round(CELL / SPEED));
 const T_MAX  = 120;
 
-// Dark-theme robot colors matching CSS vars
 const COLORS = ['#ff6b6b', '#4ecdc4', '#ffd93d', '#a29bfe'];
 const NAMES  = ['R1', 'R2', 'R3', 'R4'];
 
@@ -663,13 +705,13 @@ const getFPC = () => slowMode ? FPC * 4 : FPC;
 // ─────────────────────────────────────────────────────────────────────────────
 //  Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-const okey     = (c, r)  => `${c},${r}`;
-const isObs    = (c, r)  => obstacles.has(okey(c, r));
-const isCorner = (c, r)  => CORS.some(([a,b]) => a===c && b===r);
-const hypot    = (x, y)  => Math.sqrt(x*x + y*y);
-const norm     = (x, y)  => { const l=hypot(x,y); return l>0?[x/l,y/l]:[0,0]; };
-const inGrid   = (c, r)  => c>=0 && c<N && r>=0 && r<N;
-const cellPx   = (c, r)  => [PAD + c*CELL + CELL*0.5, PAD + r*CELL + CELL*0.5];
+const okey     = (c,r) => `${c},${r}`;
+const isObs    = (c,r) => obstacles.has(okey(c,r));
+const isCorner = (c,r) => CORS.some(([a,b]) => a===c && b===r);
+const hypot    = (x,y) => Math.sqrt(x*x + y*y);
+const norm     = (x,y) => { const l=hypot(x,y); return l>0?[x/l,y/l]:[0,0]; };
+const inGrid   = (c,r) => c>=0 && c<N && r>=0 && r<N;
+const cellPx   = (c,r) => [PAD + c*CELL + CELL*.5, PAD + r*CELL + CELL*.5];
 const pxCell   = (px,py) => [Math.floor((px-PAD)/CELL), Math.floor((py-PAD)/CELL)];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -678,24 +720,22 @@ const pxCell   = (px,py) => [Math.floor((px-PAD)/CELL), Math.floor((py-PAD)/CELL
 class MinHeap {
   constructor() { this.h = []; }
   push(n) {
-    this.h.push(n);
-    let i = this.h.length - 1;
-    while (i > 0) {
-      const p = (i-1)>>1;
+    this.h.push(n); let i = this.h.length-1;
+    while (i>0) {
+      const p=(i-1)>>1;
       if (this.h[p].f <= this.h[i].f) break;
-      [this.h[p],this.h[i]] = [this.h[i],this.h[p]]; i = p;
+      [this.h[p],this.h[i]]=[this.h[i],this.h[p]]; i=p;
     }
   }
   pop() {
-    const top = this.h[0], last = this.h.pop();
+    const top=this.h[0], last=this.h.pop();
     if (this.h.length) {
-      this.h[0] = last;
-      let i = 0;
-      for (;;) {
-        let s=i, l=2*i+1, r=2*i+2;
-        if (l<this.h.length && this.h[l].f<this.h[s].f) s=l;
-        if (r<this.h.length && this.h[r].f<this.h[s].f) s=r;
-        if (s===i) break;
+      this.h[0]=last; let i=0;
+      for(;;) {
+        let s=i,l=2*i+1,r=2*i+2;
+        if(l<this.h.length&&this.h[l].f<this.h[s].f)s=l;
+        if(r<this.h.length&&this.h[r].f<this.h[s].f)s=r;
+        if(s===i)break;
         [this.h[s],this.h[i]]=[this.h[i],this.h[s]]; i=s;
       }
     }
@@ -705,7 +745,7 @@ class MinHeap {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Standard A*
+//  Standard A* (static path viability check)
 // ─────────────────────────────────────────────────────────────────────────────
 const DIRS8 = [
   [-1,-1,Math.SQRT2],[-1,0,1],[-1,1,Math.SQRT2],
@@ -713,30 +753,26 @@ const DIRS8 = [
   [ 1,-1,Math.SQRT2],[ 1,0,1],[ 1,1,Math.SQRT2]
 ];
 
-function astar(sc, sr, gc, gr) {
-  const h   = (c,r) => hypot(gc-c, gr-r);
-  const key = (c,r) => c*N+r;
-  const heap = new MinHeap(), gMap = new Map(), closed = new Set();
-  heap.push({f:h(sc,sr), g:0, c:sc, r:sr, par:null});
-  gMap.set(key(sc,sr), 0);
-  while (heap.size) {
-    const cur = heap.pop();
-    const ck  = key(cur.c, cur.r);
-    if (closed.has(ck)) continue;
-    closed.add(ck);
-    if (cur.c===gc && cur.r===gr) {
+function astar(sc,sr,gc,gr) {
+  const h=(c,r)=>hypot(gc-c,gr-r);
+  const key=(c,r)=>c*N+r;
+  const heap=new MinHeap(), gMap=new Map(), closed=new Set();
+  heap.push({f:h(sc,sr),g:0,c:sc,r:sr,par:null});
+  gMap.set(key(sc,sr),0);
+  while(heap.size) {
+    const cur=heap.pop(), ck=key(cur.c,cur.r);
+    if(closed.has(ck))continue; closed.add(ck);
+    if(cur.c===gc&&cur.r===gr){
       const p=[]; let n=cur; while(n){p.unshift([n.c,n.r]);n=n.par;} return p;
     }
-    for (const [dc,dr,cost] of DIRS8) {
-      const nc=cur.c+dc, nr=cur.r+dr;
-      if (!inGrid(nc,nr) || isObs(nc,nr)) continue;
-      if (dc&&dr&&(isObs(cur.c+dc,cur.r)||isObs(cur.c,cur.r+dr))) continue;
-      const nk=key(nc,nr);
-      if (closed.has(nk)) continue;
+    for(const [dc,dr,cost] of DIRS8) {
+      const nc=cur.c+dc,nr=cur.r+dr;
+      if(!inGrid(nc,nr)||isObs(nc,nr))continue;
+      if(dc&&dr&&(isObs(cur.c+dc,cur.r)||isObs(cur.c,cur.r+dr)))continue;
+      const nk=key(nc,nr); if(closed.has(nk))continue;
       const g=cur.g+cost;
-      if (g<(gMap.get(nk)??Infinity)) {
-        gMap.set(nk,g);
-        heap.push({f:g+h(nc,nr),g,c:nc,r:nr,par:cur});
+      if(g<(gMap.get(nk)??Infinity)){
+        gMap.set(nk,g); heap.push({f:g+h(nc,nr),g,c:nc,r:nr,par:cur});
       }
     }
   }
@@ -752,43 +788,32 @@ const DIRS9 = [
   [ 1,-1,Math.SQRT2],[ 1,0,1],[ 1,1,Math.SQRT2]
 ];
 
-function timespaceAstar(sc, sr, gc, gr, reservations) {
-  const h    = (c,r) => hypot(gc-c, gr-r);
-  const skey = (c,r,t) => (c*N+r)*T_MAX + t;
-
+function timespaceAstar(sc,sr,gc,gr,reservations) {
+  const h=(c,r)=>hypot(gc-c,gr-r)*.8;
+  const skey=(c,r,t)=>(c*N+r)*T_MAX+t;
   const heap=new MinHeap(), gMap=new Map(), closed=new Set();
-  heap.push({f:h(sc,sr), g:0, c:sc, r:sr, t:0, par:null});
-  gMap.set(skey(sc,sr,0), 0);
-
-  while (heap.size) {
-    const cur = heap.pop();
-    const ck  = skey(cur.c, cur.r, cur.t);
-    if (closed.has(ck)) continue;
-    closed.add(ck);
-
-    if (cur.c===gc && cur.r===gr) {
+  heap.push({f:h(sc,sr),g:0,c:sc,r:sr,t:0,par:null});
+  gMap.set(skey(sc,sr,0),0);
+  while(heap.size) {
+    const cur=heap.pop(), ck=skey(cur.c,cur.r,cur.t);
+    if(closed.has(ck))continue; closed.add(ck);
+    if(cur.c===gc&&cur.r===gr){
       const p=[]; let n=cur; while(n){p.unshift([n.c,n.r]);n=n.par;} return p;
     }
-    if (cur.t >= T_MAX-1) continue;
-    const nt = cur.t+1;
-
-    for (const [dc,dr,cost] of DIRS9) {
-      const nc=cur.c+dc, nr=cur.r+dr;
-      if (!inGrid(nc,nr) || isObs(nc,nr)) continue;
-      if (dc&&dr&&(isObs(cur.c+dc,cur.r)||isObs(cur.c,cur.r+dr))) continue;
-
-      if (reservations.has(`${nc},${nr},${nt}`)) continue;
-
-      const whoAtNcNow  = reservations.get(`${nc},${nr},${cur.t}`);
-      const whoAtCurNxt = reservations.get(`${cur.c},${cur.r},${nt}`);
-      if (whoAtNcNow !== undefined && whoAtNcNow === whoAtCurNxt) continue;
-
-      const nk = skey(nc,nr,nt);
-      if (closed.has(nk)) continue;
-      const g = cur.g+cost;
-      if (g<(gMap.get(nk)??Infinity)) {
-        gMap.set(nk,g);
-        heap.push({f:g+h(nc,nr),g,c:nc,r:nr,t:nt,par:cur});
+    if(cur.t>=T_MAX-1)continue;
+    const nt=cur.t+1;
+    for(const [dc,dr,cost] of DIRS9) {
+      const nc=cur.c+dc,nr=cur.r+dr;
+      if(!inGrid(nc,nr)||isObs(nc,nr))continue;
+      if(dc&&dr&&(isObs(cur.c+dc,cur.r)||isObs(cur.c,cur.r+dr)))continue;
+      if(reservations.has(`${nc},${nr},${nt}`))continue;
+      const whoAtNcNow=reservations.get(`${nc},${nr},${cur.t}`);
+      const whoAtCurNxt=reservations.get(`${cur.c},${cur.r},${nt}`);
+      if(whoAtNcNow!==undefined&&whoAtNcNow===whoAtCurNxt)continue;
+      const nk=skey(nc,nr,nt); if(closed.has(nk))continue;
+      const g=cur.g+cost;
+      if(g<(gMap.get(nk)??Infinity)){
+        gMap.set(nk,g); heap.push({f:g+h(nc,nr),g,c:nc,r:nr,t:nt,par:cur});
       }
     }
   }
@@ -799,285 +824,269 @@ function timespaceAstar(sc, sr, gc, gr, reservations) {
 //  Robot factory
 // ─────────────────────────────────────────────────────────────────────────────
 function makeRobots() {
-  return CORS.map(([sc,sr], i) => {
-    const [gc,gr] = CORS[DEST[i]];
-    const [x,y]   = cellPx(sc,sr);
-    return {
-      sc,sr, gc,gr,
-      x,y, vx:0, vy:0,
-      color:COLORS[i], name:NAMES[i],
-      path:[],
-      timeStep:0,
-      subStep:0,
-      trail:[],
-      done:false,
-      trapped:false,
-    };
+  return CORS.map(([sc,sr],i) => {
+    const [gc,gr]=CORS[DEST[i]], [x,y]=cellPx(sc,sr);
+    return { sc,sr,gc,gr,x,y,vx:0,vy:0,color:COLORS[i],name:NAMES[i],
+             path:[],timeStep:0,subStep:0,trail:[],done:false,trapped:false };
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Try all 24 planning orders — pick the best
+// ─────────────────────────────────────────────────────────────────────────────
+function permutations(arr) {
+  if(arr.length<=1)return[[...arr]];
+  const out=[];
+  for(let i=0;i<arr.length;i++){
+    const rest=[...arr.slice(0,i),...arr.slice(i+1)];
+    for(const p of permutations(rest))out.push([arr[i],...p]);
+  }
+  return out;
+}
+
+function planBestOrder() {
+  const hasStatic=robots.map(r=>!!astar(r.sc,r.sr,r.gc,r.gr));
+  const PERMS=permutations([0,1,2,3]);
+  let bestPaths=new Array(4).fill(null), bestCount=-1, bestCost=Infinity;
+
+  for(const order of PERMS) {
+    const reservations=new Map(), paths=new Array(4).fill(null);
+    let count=0, cost=0;
+    for(const i of order) {
+      if(!hasStatic[i])continue;
+      const r=robots[i];
+      const path=timespaceAstar(r.sc,r.sr,r.gc,r.gr,reservations);
+      if(!path)continue;
+      paths[i]=path; count++; cost+=path.length;
+      for(let t=0;t<path.length;t++)reservations.set(`${path[t][0]},${path[t][1]},${t}`,i);
+      const [fg,rg]=path[path.length-1];
+      for(let t=path.length;t<T_MAX;t++)reservations.set(`${fg},${rg},${t}`,i);
+    }
+    if(count>bestCount||(count===bestCount&&cost<bestCost)){
+      bestCount=count; bestCost=cost; bestPaths=[...paths];
+    }
+  }
+  return bestPaths;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Start
 // ─────────────────────────────────────────────────────────────────────────────
 function startSim() {
-  if (mode === 'running') return;
-
-  const reservations = new Map();
-  const trapped = [];
-
-  for (let i = 0; i < robots.length; i++) {
-    const r = robots[i];
-    [r.x, r.y]  = cellPx(r.sc, r.sr);
-    r.vx=0; r.vy=0; r.trail=[]; r.done=false; r.trapped=false;
-    r.timeStep=0; r.subStep=0;
-
-    if (!astar(r.sc, r.sr, r.gc, r.gr)) {
-      r.trapped=true; r.done=true; trapped.push(r.name); continue;
-    }
-
-    const path = timespaceAstar(r.sc, r.sr, r.gc, r.gr, reservations);
-    if (!path) {
-      r.trapped=true; r.done=true; trapped.push(r.name); continue;
-    }
-    r.path = path;
-
-    for (let t=0; t<path.length; t++) {
-      reservations.set(`${path[t][0]},${path[t][1]},${t}`, i);
-    }
-    const [fg,rg] = path[path.length-1];
-    for (let t=path.length; t<T_MAX; t++) reservations.set(`${fg},${rg},${t}`, i);
+  if(mode==='running')return;
+  for(let i=0;i<robots.length;i++){
+    const r=robots[i];
+    [r.x,r.y]=cellPx(r.sc,r.sr);
+    r.vx=0;r.vy=0;r.trail=[];r.done=false;r.trapped=false;
+    r.timeStep=0;r.subStep=0;r.path=[];
   }
-
+  const paths=planBestOrder(), trapped=[];
+  for(let i=0;i<robots.length;i++){
+    if(paths[i]){robots[i].path=paths[i];}
+    else{robots[i].trapped=true;robots[i].done=true;trapped.push(robots[i].name);}
+  }
   setMode('running');
-  if (trapped.length) {
-    modeBar.textContent = `⚠ ${trapped.join(' & ')} WALLED IN — CLEAR CELLS NEAR CORNER`;
-    modeBar.className = 'error';
+  if(trapped.length){
+    modeBar.textContent=`⚠ ${trapped.join(' & ')} WALLED IN — CLEAR CELLS NEAR CORNER`;
+    modeBar.className='error';
   }
-  if (raf) cancelAnimationFrame(raf);
-  raf = requestAnimationFrame(loop);
+  if(raf)cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(loop);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Step
 // ─────────────────────────────────────────────────────────────────────────────
 function step() {
-  for (const r of robots) {
-    if (r.done || r.trapped) continue;
-
-    const fpc = getFPC();
+  for(const r of robots) {
+    if(r.done||r.trapped)continue;
+    const fpc=getFPC();
     r.subStep++;
-    if (r.subStep >= fpc) {
-      r.subStep = 0;
-      r.timeStep++;
+    if(r.subStep>=fpc){r.subStep=0;r.timeStep++;}
+    if(r.timeStep>=r.path.length-1){
+      [r.x,r.y]=cellPx(r.gc,r.gr);r.vx=0;r.vy=0;r.done=true;continue;
     }
-
-    if (r.timeStep >= r.path.length - 1) {
-      [r.x, r.y] = cellPx(r.gc, r.gr);
-      r.vx = 0; r.vy = 0;
-      r.done = true;
-      continue;
-    }
-
-    const [c0,r0] = r.path[r.timeStep];
-    const [c1,r1] = r.path[r.timeStep+1];
-    const [x0,y0] = cellPx(c0,r0);
-    const [x1,y1] = cellPx(c1,r1);
-    const t = r.subStep / fpc;
-
-    r.x  = x0 + (x1-x0)*t;
-    r.y  = y0 + (y1-y0)*t;
-    r.vx = (x1-x0)/fpc;
-    r.vy = (y1-y0)/fpc;
-
-    r.trail.push([r.x, r.y]);
-    if (r.trail.length > 220) r.trail.shift();
+    const [c0,r0]=r.path[r.timeStep],[c1,r1]=r.path[r.timeStep+1];
+    const [x0,y0]=cellPx(c0,r0),[x1,y1]=cellPx(c1,r1);
+    const t=r.subStep/fpc;
+    r.x=x0+(x1-x0)*t; r.y=y0+(y1-y0)*t;
+    r.vx=(x1-x0)/fpc; r.vy=(y1-y0)/fpc;
+    r.trail.push([r.x,r.y]);
+    if(r.trail.length>220)r.trail.shift();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Draw — dark theme
+//  Draw — blueprint palette
 // ─────────────────────────────────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0,0,SIZE,SIZE);
 
-  // Background
-  ctx.fillStyle = '#080c14';
+  // Canvas background — deep blueprint ink
+  ctx.fillStyle='#050d1a';
   ctx.fillRect(0,0,SIZE,SIZE);
 
-  // Subtle radial vignette
-  const vg = ctx.createRadialGradient(SIZE/2,SIZE/2,SIZE*.1,SIZE/2,SIZE/2,SIZE*.7);
-  vg.addColorStop(0,'rgba(15,25,45,.0)');
-  vg.addColorStop(1,'rgba(5,8,15,.6)');
-  ctx.fillStyle=vg; ctx.fillRect(0,0,SIZE,SIZE);
+  // Subtle vignette
+  const vig=ctx.createRadialGradient(SIZE/2,SIZE/2,SIZE*.05,SIZE/2,SIZE/2,SIZE*.72);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,.5)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,SIZE,SIZE);
 
   // Cells
-  for (let c=0; c<N; c++) {
-    for (let r=0; r<N; r++) {
-      const x=PAD+c*CELL, y=PAD+r*CELL, w=CELL-1, h=CELL-1;
-      if (isObs(c,r)) {
-        // Obstacle: dark red with cross
-        ctx.fillStyle = '#1a0a0a';
-        ctx.fillRect(x+.5,y+.5,w,h);
-        ctx.strokeStyle='rgba(220,60,60,.5)'; ctx.lineWidth=.8;
-        ctx.beginPath();
-        ctx.moveTo(x+3,y+3); ctx.lineTo(x+w-2,y+h-2);
-        ctx.moveTo(x+w-2,y+3); ctx.lineTo(x+3,y+h-2);
-        ctx.stroke();
-        // Red border on obstacle
-        ctx.strokeStyle='rgba(200,50,50,.3)'; ctx.lineWidth=.5;
-        ctx.strokeRect(x+.5,y+.5,w,h);
-      } else if (isCorner(c,r)) {
-        const idx=CORS.findIndex(([a,b])=>a===c&&b===r);
-        ctx.fillStyle=COLORS[idx]+'18';
-        ctx.fillRect(x+.5,y+.5,w,h);
-        ctx.strokeStyle=COLORS[idx]+'66'; ctx.lineWidth=1.2;
-        ctx.strokeRect(x+1.5,y+1.5,w-2,h-2);
-      } else {
-        ctx.fillStyle='#0d1420';
-        ctx.fillRect(x+.5,y+.5,w,h);
-      }
+  for(let c=0;c<N;c++) for(let r=0;r<N;r++) {
+    const x=PAD+c*CELL,y=PAD+r*CELL,w=CELL-1,h=CELL-1;
+    if(isObs(c,r)) {
+      // Blueprint obstacle: dark reddish with cross-hatch
+      ctx.fillStyle='#140608'; ctx.fillRect(x+.5,y+.5,w,h);
+      ctx.strokeStyle='rgba(200,60,60,.4)'; ctx.lineWidth=.7;
+      ctx.beginPath();
+      ctx.moveTo(x+2,y+2);ctx.lineTo(x+w-1,y+h-1);
+      ctx.moveTo(x+w-1,y+2);ctx.lineTo(x+2,y+h-1);
+      ctx.stroke();
+      ctx.strokeStyle='rgba(180,50,50,.2)'; ctx.lineWidth=.5;
+      ctx.strokeRect(x+.5,y+.5,w,h);
+    } else if(isCorner(c,r)) {
+      const idx=CORS.findIndex(([a,b])=>a===c&&b===r);
+      ctx.fillStyle=COLORS[idx]+'1a'; ctx.fillRect(x+.5,y+.5,w,h);
+      ctx.strokeStyle=COLORS[idx]+'60'; ctx.lineWidth=1.2;
+      ctx.strokeRect(x+1.5,y+1.5,w-2,h-2);
+    } else {
+      ctx.fillStyle='#08111e'; ctx.fillRect(x+.5,y+.5,w,h);
     }
   }
 
-  // Grid lines
-  ctx.strokeStyle='rgba(26,45,74,.7)'; ctx.lineWidth=.5;
-  for (let i=0;i<=N;i++) {
+  // Grid lines — blueprint style (faint)
+  ctx.strokeStyle='rgba(30,80,160,.35)'; ctx.lineWidth=.5;
+  for(let i=0;i<=N;i++) {
     const v=PAD+i*CELL;
-    ctx.beginPath(); ctx.moveTo(v,PAD); ctx.lineTo(v,PAD+AREA); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(PAD,v); ctx.lineTo(PAD+AREA,v); ctx.stroke();
+    ctx.beginPath();ctx.moveTo(v,PAD);ctx.lineTo(v,PAD+AREA);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD,v);ctx.lineTo(PAD+AREA,v);ctx.stroke();
   }
 
-  // Border
-  ctx.strokeStyle='rgba(36,61,92,.8)'; ctx.lineWidth=1.5;
+  // Border — brighter blueprint line
+  ctx.strokeStyle='rgba(50,120,220,.55)'; ctx.lineWidth=1.5;
   ctx.strokeRect(PAD,PAD,AREA,AREA);
 
-  // Hover highlight
-  if (mode==='setup' && hover) {
+  // Hover
+  if(mode==='setup'&&hover){
     const [hc,hr]=hover;
-    if (!isCorner(hc,hr)) {
-      ctx.fillStyle=isObs(hc,hr)?'rgba(255,60,60,.12)':'rgba(58,159,216,.10)';
+    if(!isCorner(hc,hr)){
+      ctx.fillStyle=isObs(hc,hr)?'rgba(255,50,50,.1)':'rgba(61,159,220,.1)';
       ctx.fillRect(PAD+hc*CELL+.5,PAD+hr*CELL+.5,CELL-1,CELL-1);
     }
   }
 
-  // Planned path dots
-  if (mode==='running'||mode==='done') {
-    for (const r of robots) {
-      if (r.done||r.trapped||r.path.length<2) continue;
-      ctx.fillStyle=r.color+'40';
-      for (let i=r.timeStep+1;i<r.path.length;i++) {
+  // Path waypoints
+  if(mode==='running'||mode==='done') {
+    for(const r of robots) {
+      if(r.done||r.trapped||r.path.length<2)continue;
+      ctx.fillStyle=r.color+'42';
+      for(let i=r.timeStep+1;i<r.path.length;i++){
         const [cx,cy]=cellPx(r.path[i][0],r.path[i][1]);
-        ctx.beginPath(); ctx.arc(cx,cy,1.5,0,Math.PI*2); ctx.fill();
+        ctx.beginPath();ctx.arc(cx,cy,1.6,0,Math.PI*2);ctx.fill();
       }
     }
   }
 
   // Destination rings
-  for (const r of robots) {
+  for(const r of robots) {
     const [gx,gy]=cellPx(r.gc,r.gr);
-    // Outer glow ring
-    ctx.beginPath(); ctx.arc(gx,gy,R*2.2,0,Math.PI*2);
-    ctx.strokeStyle=r.color+(r.done?'30':'18');
-    ctx.lineWidth=4; ctx.stroke();
-    // Main ring
-    ctx.beginPath(); ctx.arc(gx,gy,R*1.5,0,Math.PI*2);
+    // Outer glow
+    ctx.beginPath();ctx.arc(gx,gy,R*2.5,0,Math.PI*2);
+    ctx.strokeStyle=r.color+(r.done?'25':'10'); ctx.lineWidth=5; ctx.stroke();
+    // Ring
+    ctx.beginPath();ctx.arc(gx,gy,R*1.5,0,Math.PI*2);
     ctx.strokeStyle=r.color+(r.done?'cc':'55');
-    ctx.lineWidth=1.5;
-    ctx.setLineDash(r.done?[]:[3,3]);
-    ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineWidth=1.5; ctx.setLineDash(r.done?[]:[4,3]); ctx.stroke(); ctx.setLineDash([]);
   }
 
-  // Trails — glowing
-  for (const r of robots) {
-    const t=r.trail;
-    if (t.length<2) continue;
-    for (let i=1;i<t.length;i++) {
-      const prog = i/t.length;
-      const alpha = Math.floor(prog*80).toString(16).padStart(2,'0');
+  // Trails — tapered, glowing
+  for(const r of robots) {
+    const t=r.trail; if(t.length<2)continue;
+    for(let i=1;i<t.length;i++){
+      const prog=i/t.length;
       ctx.beginPath();
-      ctx.moveTo(t[i-1][0],t[i-1][1]);
-      ctx.lineTo(t[i][0],t[i][1]);
-      ctx.strokeStyle=r.color+alpha;
-      ctx.lineWidth = prog * 2.5;
-      ctx.stroke();
+      ctx.moveTo(t[i-1][0],t[i-1][1]); ctx.lineTo(t[i][0],t[i][1]);
+      ctx.strokeStyle=r.color+Math.floor(prog*85).toString(16).padStart(2,'0');
+      ctx.lineWidth=prog*2.8; ctx.stroke();
     }
   }
 
   // Trapped flash
-  for (const r of robots) {
-    if (!r.trapped) continue;
-    for (let dc=-1;dc<=1;dc++) for (let dr=-1;dr<=1;dr++) {
-      if (!dc&&!dr) continue;
-      const nc=r.sc+dc, nr=r.sr+dr;
-      if (!inGrid(nc,nr)||!isObs(nc,nr)) continue;
-      const bx=PAD+nc*CELL, by=PAD+nr*CELL;
+  for(const r of robots) {
+    if(!r.trapped)continue;
+    for(let dc=-1;dc<=1;dc++) for(let dr=-1;dr<=1;dr++){
+      if(!dc&&!dr)continue;
+      const nc=r.sc+dc,nr=r.sr+dr;
+      if(!inGrid(nc,nr)||!isObs(nc,nr))continue;
+      const bx=PAD+nc*CELL,by=PAD+nr*CELL;
       ctx.fillStyle=`rgba(220,50,50,${.12+.08*Math.sin(frame*.08)})`;
       ctx.fillRect(bx+.5,by+.5,CELL-1,CELL-1);
     }
   }
 
   // Robots
-  for (const r of robots) {
+  for(const r of robots) {
     const {x,y,done,trapped}=r;
 
-    if (trapped) {
+    // Pulsing trapped ring
+    if(trapped){
       const p=.5+.5*Math.sin(frame*.10);
-      ctx.beginPath(); ctx.arc(x,y,R*(1.8+.4*p),0,Math.PI*2);
-      ctx.strokeStyle=`rgba(200,40,40,${.5*p})`; ctx.lineWidth=2; ctx.stroke();
+      ctx.beginPath();ctx.arc(x,y,R*(1.8+.4*p),0,Math.PI*2);
+      ctx.strokeStyle=`rgba(200,40,40,${.5*p})`;ctx.lineWidth=2;ctx.stroke();
     }
 
-    // Glow halo
-    if (!done&&!trapped) {
-      const pulse = .5+.5*Math.sin(frame*.05);
-      const glow = ctx.createRadialGradient(x,y,0,x,y,R*3);
-      glow.addColorStop(0,r.color+Math.floor(30*pulse).toString(16).padStart(2,'0'));
-      glow.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.beginPath(); ctx.arc(x,y,R*3,0,Math.PI*2);
-      ctx.fillStyle=glow; ctx.fill();
+    // Moving glow halo
+    if(!done&&!trapped){
+      const pulse=.5+.5*Math.sin(frame*.06);
+      const halo=ctx.createRadialGradient(x,y,0,x,y,R*3.2);
+      halo.addColorStop(0,r.color+Math.floor(22*pulse).toString(16).padStart(2,'0'));
+      halo.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath();ctx.arc(x,y,R*3.2,0,Math.PI*2);
+      ctx.fillStyle=halo;ctx.fill();
     }
 
-    // Shadow
-    const g=ctx.createRadialGradient(x,y+2,0,x,y+2,R*2.8);
-    g.addColorStop(0,`rgba(0,0,0,${done?.04:.20})`);
-    g.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(x,y+2,R*2.8,0,Math.PI*2);
-    ctx.fillStyle=g; ctx.fill();
+    // Drop shadow
+    const sh=ctx.createRadialGradient(x,y+2,0,x,y+2,R*2.5);
+    sh.addColorStop(0,`rgba(0,0,0,${done?.04:.25})`);
+    sh.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.arc(x,y+2,R*2.5,0,Math.PI*2);
+    ctx.fillStyle=sh;ctx.fill();
 
-    // Body — with radial gradient for depth
-    const bodyGrad = ctx.createRadialGradient(x-R*.25,y-R*.25,0,x,y,R*1.1);
-    const col = trapped?'#555':(done?r.color+'99':r.color);
-    bodyGrad.addColorStop(0, trapped?'#888':(done?r.color+'bb':r.color+'ff'));
-    bodyGrad.addColorStop(1, trapped?'#333':(done?r.color+'55':r.color+'bb'));
-    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2);
-    ctx.fillStyle=bodyGrad; ctx.fill();
+    // Body gradient
+    const bg=ctx.createRadialGradient(x-R*.3,y-R*.3,0,x,y,R*1.1);
+    if(trapped){bg.addColorStop(0,'#666');bg.addColorStop(1,'#333');}
+    else if(done){bg.addColorStop(0,r.color+'bb');bg.addColorStop(1,r.color+'55');}
+    else{bg.addColorStop(0,r.color+'ff');bg.addColorStop(1,r.color+'cc');}
+    ctx.beginPath();ctx.arc(x,y,R,0,Math.PI*2);
+    ctx.fillStyle=bg;ctx.fill();
 
-    // Rim
-    ctx.beginPath(); ctx.arc(x,y,R,0,Math.PI*2);
-    ctx.strokeStyle=trapped?'rgba(255,80,80,.7)':'rgba(255,255,255,.5)';
-    ctx.lineWidth=trapped?2:1.5; ctx.stroke();
+    // Specular rim
+    ctx.beginPath();ctx.arc(x,y,R,0,Math.PI*2);
+    ctx.strokeStyle=trapped?'rgba(255,80,80,.6)':'rgba(255,255,255,.45)';
+    ctx.lineWidth=trapped?2:1.5;ctx.stroke();
 
     // Direction arrow
-    if (!done&&!trapped&&(r.vx||r.vy)) {
+    if(!done&&!trapped&&(r.vx||r.vy)){
       const [nx,ny]=norm(r.vx,r.vy);
       ctx.beginPath();
       ctx.moveTo(x+nx*R*.55,y+ny*R*.55);
       ctx.lineTo(x-nx*R*.38,y-ny*R*.38);
-      ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.8; ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1.8;ctx.stroke();
     }
 
-    // X on trapped
-    if (trapped) {
-      ctx.strokeStyle='rgba(220,50,50,.8)'; ctx.lineWidth=2;
+    // Trapped X
+    if(trapped){
+      ctx.strokeStyle='rgba(220,50,50,.8)';ctx.lineWidth=2;
       ctx.beginPath();
-      ctx.moveTo(x-R*.5,y-R*.5); ctx.lineTo(x+R*.5,y+R*.5);
-      ctx.moveTo(x+R*.5,y-R*.5); ctx.lineTo(x-R*.5,y+R*.5);
+      ctx.moveTo(x-R*.5,y-R*.5);ctx.lineTo(x+R*.5,y+R*.5);
+      ctx.moveTo(x+R*.5,y-R*.5);ctx.lineTo(x-R*.5,y+R*.5);
       ctx.stroke();
     }
 
     // Label
-    const fs=Math.max(7,Math.floor(R*.76));
-    ctx.font=`bold ${fs}px 'Space Mono', monospace`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const fs=Math.max(7,Math.floor(R*.75));
+    ctx.font=`700 ${fs}px 'IBM Plex Mono',monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle=trapped?'rgba(255,100,100,.9)':(done?'rgba(255,255,255,.4)':'rgba(255,255,255,.9)');
     ctx.fillText(r.name,x,y);
   }
@@ -1087,88 +1096,77 @@ function draw() {
 //  Loop
 // ─────────────────────────────────────────────────────────────────────────────
 function loop() {
-  frame++;
-  step();
-  draw();
-
-  const active   = robots.filter(r=>!r.trapped);
-  const arrived  = active.filter(r=>r.done).length;
-  const nTrapped = robots.filter(r=>r.trapped).length;
-
-  if (arrived < active.length) {
-    if (!nTrapped) modeBar.textContent=`RUNNING — ${arrived} / ${active.length} ARRIVED`;
-    raf = requestAnimationFrame(loop);
+  frame++;step();draw();
+  const active=robots.filter(r=>!r.trapped);
+  const arrived=active.filter(r=>r.done).length;
+  const nTrapped=robots.filter(r=>r.trapped).length;
+  if(arrived<active.length){
+    if(!nTrapped)modeBar.textContent=`RUNNING — ${arrived} / ${active.length} ARRIVED`;
+    raf=requestAnimationFrame(loop);
   } else {
-    const msg = nTrapped
-      ? `${active.length} ARRIVED — ${nTrapped} ROBOT${nTrapped>1?'S':''} WALLED IN — HIT RESET`
-      : 'ALL ROBOTS ARRIVED — HIT RESET TO RUN AGAIN';
-    setMode('done', msg);
-    if (nTrapped) modeBar.className='error';
+    const msg=nTrapped
+      ?`${active.length} ARRIVED — ${nTrapped} ROBOT${nTrapped>1?'S':''} WALLED IN — HIT RESET`
+      :'ALL ROBOTS ARRIVED — HIT RESET TO RUN AGAIN';
+    setMode('done',msg);
+    if(nTrapped)modeBar.className='error';
     draw();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Mode + controls
+//  Controls
 // ─────────────────────────────────────────────────────────────────────────────
-function setMode(m, msg) {
-  mode = m;
-  modeBar.className = m;
-  const texts = {
-    setup:   'SETUP — CLICK ANY CELL TO TOGGLE AN OBSTACLE',
-    running: 'RUNNING...',
-    done:    msg||'DONE',
-    error:   msg||'ERROR',
+function setMode(m,msg) {
+  mode=m; modeBar.className=m;
+  const texts={
+    setup:'SETUP — CLICK GRID CELLS TO TOGGLE OBSTACLES',
+    running:'RUNNING...',done:msg||'DONE',error:msg||'ERROR'
   };
-  modeBar.textContent = msg||texts[m];
-  btnGo.disabled    = (m==='running');
-  btnClear.disabled = (m==='running');
+  modeBar.textContent=msg||texts[m];
+  btnGo.disabled=(m==='running');
+  btnClear.disabled=(m==='running');
 }
 
 function toggleSlow() {
-  slowMode = !slowMode;
-  const btn = document.getElementById('btn-slow');
-  btn.textContent = slowMode ? '◈ NORMAL SPEED' : '◈ SLOW MODE';
-  btn.classList.toggle('active-slow', slowMode);
+  slowMode=!slowMode;
+  const btn=document.getElementById('btn-slow');
+  btn.textContent=slowMode?'◈ NORMAL':'◈ SLOW MODE';
+  btn.classList.toggle('active-slow',slowMode);
 }
 
-function clearObs() { obstacles.clear(); if (mode!=='running') draw(); }
+function clearObs(){obstacles.clear();if(mode!=='running')draw();}
 
-function resetSim() {
-  if (raf) { cancelAnimationFrame(raf); raf=null; }
-  robots = makeRobots();
-  frame  = 0;
-  setMode('setup');
-  draw();
+function resetSim(){
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  robots=makeRobots();frame=0;setMode('setup');draw();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Canvas interaction
 // ─────────────────────────────────────────────────────────────────────────────
-function getCell(e) {
+function getCell(e){
   const rect=canvas.getBoundingClientRect();
-  const [c,r]=pxCell(e.clientX-rect.left, e.clientY-rect.top);
+  const [c,r]=pxCell(e.clientX-rect.left,e.clientY-rect.top);
   return inGrid(c,r)?[c,r]:null;
 }
-
-canvas.addEventListener('mousemove', e=>{
-  if (mode!=='setup'){hover=null;return;}
-  hover=getCell(e); draw();
+canvas.addEventListener('mousemove',e=>{
+  if(mode!=='setup'){hover=null;return;}
+  hover=getCell(e);draw();
 });
-canvas.addEventListener('mouseleave',()=>{ hover=null; if(mode==='setup')draw(); });
-canvas.addEventListener('click', e=>{
-  if (mode!=='setup') return;
-  const cell=getCell(e); if (!cell) return;
-  const [c,r]=cell; if (isCorner(c,r)) return;
+canvas.addEventListener('mouseleave',()=>{hover=null;if(mode==='setup')draw();});
+canvas.addEventListener('click',e=>{
+  if(mode!=='setup')return;
+  const cell=getCell(e);if(!cell)return;
+  const [c,r]=cell;if(isCorner(c,r))return;
   const k=okey(c,r);
-  if (obstacles.has(k)) obstacles.delete(k); else obstacles.add(k);
+  if(obstacles.has(k))obstacles.delete(k);else obstacles.add(k);
   draw();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Boot
 // ─────────────────────────────────────────────────────────────────────────────
-robots = makeRobots();
+robots=makeRobots();
 draw();
 </script>
 </body>
